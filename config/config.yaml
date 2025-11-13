@@ -1,0 +1,71 @@
+
+# ============================================================
+# Gene-Drug CDSS v2 - Master Pipeline Configuration
+# ============================================================
+
+pipeline:
+  drug_vector_dim: 135
+  protein_vector_dim: 38
+
+raw_data:
+  genes_tsv: data/raw/genes.tsv
+  drugs_tsv: data/raw/drugs.tsv
+  relationships_tsv: data/raw/relationships.tsv
+  phytochemicals_csv: data/raw/phytochemicals_new1.csv
+
+column_names:
+  # Genes
+  gene_id: "PharmGKB Accession Id"
+  gene_symbol: "Symbol"
+  gene_name: "Name"
+  gene_alt_names: "Alternate Names"
+
+  # Drugs
+  drug_id: "PharmGKB Accession Id"
+  drug_smiles: "SMILES"
+  drug_name: "Name"
+  drug_generic: "Generic Names"
+  drug_trade: "Trade Names"
+
+  # Relationships
+  entity1_id: "Entity1_id"
+  entity2_id: "Entity2_id"
+  entity1_type: "Entity1_type"
+  entity2_type: "Entity2_type"
+  association_label: "Association"
+
+  # Phytochemicals (dirty headers preserved exactly)
+  phyto_name: "Chemical Name"
+  phyto_family: "Family"
+  phyto_class: "Class "
+  phyto_identifier: "Identifier "
+  phyto_smiles: "Smiles"
+  phyto_polarity: "Ploarity"
+  phyto_white: "White"
+  phyto_yellow: "Yellow"
+
+artifacts:
+  id_maps: artifacts/id_maps.json
+  drug_library: artifacts/drug_library.npy
+  protein_library: artifacts/protein_library.npy
+  phyto_library: artifacts/phyto_library.npy
+  phyto_metadata: artifacts/phyto_metadata.parquet
+  association_dataset: artifacts/association_dataset.pt
+  cvae_positive_pairs: artifacts/positive_feature_pairs.pt
+  association_model: artifacts/model.pt
+  cvae_model: artifacts/cvae_model.pt
+
+models:
+  association_model:
+    hidden_dim: 256
+    dropout: 0.25
+    lr: 1e-3
+    batch_size: 64
+    num_epochs: 40
+
+  cvae:
+    latent_dim: 64
+    hidden_dim: 256
+    lr: 1e-3
+    batch_size: 64
+    num_epochs: 60

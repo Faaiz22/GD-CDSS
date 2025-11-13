@@ -1,0 +1,15 @@
+streamlit
+pandas
+numpy
+torch
+rdkit-pypi
+scikit-learn
+requests
+biopython
+shap
+plotly
+pyyaml
+tqdm
+openpyxl
+joblib
+pyarrow
