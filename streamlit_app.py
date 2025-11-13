@@ -34,32 +34,42 @@ st.set_page_config(
 @st.cache_data
 def check_artifacts():
     """Verify all required artifacts exist before running"""
-    required = [
-        "artifacts/id_maps.json",
-        "artifacts/drug_library.npy",
-        "artifacts/protein_library.npy",
-        "artifacts/association_dataset.pt",
-        "artifacts/model.pt",
-        "artifacts/cvae_model.pt",
-        "artifacts/phyto_library.npy",
-        "artifacts/phyto_metadata.parquet",
-    ]
+    required = {
+        "Core Data": [
+            "artifacts/id_maps.json",
+        ],
+        "Models": [
+            "artifacts/model.pt",
+            "artifacts/cvae_model.pt",
+        ],
+        "Feature Libraries": [
+            "artifacts/drug_library.npy",
+            "artifacts/protein_library.npy",
+        ],
+        "Featurizers": [
+            "artifacts/drug_featurizer_desc_scaler.pkl",
+            "artifacts/drug_featurizer_fp_scaler.pkl",
+            "artifacts/drug_featurizer_fp_pca.pkl",
+            "artifacts/protein_featurizer_physchem_scaler.pkl",
+            "artifacts/protein_featurizer_dpc_scaler.pkl",
+            "artifacts/protein_featurizer_dpc_pca.pkl",
+        ],
+        "Optional (Phytochemicals)": [
+            "artifacts/phyto_library.npy",
+            "artifacts/phyto_metadata.parquet",
+        ]
+    }
     
-    # Check featurizer models
-    required += [
-        "artifacts/drug_featurizer_desc_scaler.pkl",
-        "artifacts/drug_featurizer_fp_scaler.pkl",
-        "artifacts/drug_featurizer_fp_pca.pkl",
-        "artifacts/protein_featurizer_physchem_scaler.pkl",
-        "artifacts/protein_featurizer_dpc_scaler.pkl",
-        "artifacts/protein_featurizer_dpc_pca.pkl",
-    ]
-    
-    missing = []
-    for path in required:
-        full_path = os.path.join(PROJECT_ROOT, path)
-        if not os.path.exists(full_path):
-            missing.append(path)
+    missing = {}
+    for category, files in required.items():
+        category_missing = []
+        for path in files:
+            full_path = os.path.join(PROJECT_ROOT, path)
+            if not os.path.exists(full_path):
+                category_missing.append(path)
+        
+        if category_missing:
+            missing[category] = category_missing
     
     return missing
 
@@ -86,50 +96,126 @@ with st.spinner("Validating system artifacts..."):
 
 if missing:
     st.error("⚠️ **Critical: Missing Artifacts**")
-    st.markdown("""
-    The following required files are missing:
-    """)
-    for m in missing:
-        st.code(m)
+    
+    # Show what's missing by category
+    for category, files in missing.items():
+        if files:
+            with st.expander(f"❌ {category} ({len(files)} missing)"):
+                for f in files:
+                    st.code(f)
+    
+    st.divider()
     
     st.markdown("""
-    ### 🛠️ Setup Instructions
+    ### 🛠️ How to Fix This
     
-    **For Local Development:**
+    Your artifacts are missing. Choose **ONE** solution:
+    
+    #### **Option 1: Git LFS** (Recommended if files < 2GB total)
+    
+    ```bash
+    # Install Git LFS
+    brew install git-lfs  # macOS
+    # OR
+    sudo apt-get install git-lfs  # Linux
+    
+    # Initialize
+    git lfs install
+    
+    # Track large files
+    git lfs track "artifacts/*.npy"
+    git lfs track "artifacts/*.pt"
+    git lfs track "artifacts/*.parquet"
+    git lfs track "artifacts/*.pkl"
+    
+    # Add and push
+    git add .gitattributes
+    git add artifacts/
+    git commit -m "Add artifacts via Git LFS"
+    git push
+    ```
+    
+    #### **Option 2: Build Artifacts Now** (Slowest but works)
+    
+    If you have raw data files in `data/raw/`, you can build artifacts:
+    
     ```bash
     # 1. Install dependencies
     pip install -r requirements.txt
     
-    # 2. Build artifacts
+    # 2. Build artifacts (takes 5-15 minutes)
     python scripts/01_build_artifacts.py
     python scripts/02_train_association_model.py
     python scripts/03_train_cvae.py
     
-    # 3. Launch app
-    streamlit run streamlit_app.py
+    # 3. Commit and push
+    git add artifacts/
+    git commit -m "Add generated artifacts"
+    git push
     ```
     
-    **For Streamlit Cloud Deployment:**
+    #### **Option 3: External Storage** (Best for > 2GB)
     
-    Artifacts are too large for GitHub (>100MB). Use one of these solutions:
+    Upload artifacts to Google Drive and modify `src/utils/streamlit_helpers.py`:
     
-    1. **Git LFS** (Large File Storage):
-       ```bash
-       git lfs install
-       git lfs track "artifacts/*.npy"
-       git lfs track "artifacts/*.pt"
-       git lfs track "artifacts/*.parquet"
-       ```
+    ```python
+    # Add to requirements.txt:
+    gdown==4.7.1
     
-    2. **External Storage** (Recommended):
-       - Upload artifacts to Google Drive/Dropbox/S3
-       - Download on first run using `streamlit_helpers.py`
-       - Cache with `@st.cache_resource`
+    # In streamlit_helpers.py:
+    import gdown
+    gdown.download_folder(
+        id="YOUR_GOOGLE_DRIVE_FOLDER_ID",
+        output="artifacts/",
+        quiet=False
+    )
+    ```
     
-    3. **On-Demand Generation**:
-       - Build lightweight artifacts on Streamlit Cloud startup
-       - Trade deployment time for reduced storage
+    ---
+    
+    ### 📊 Check Your Artifact Sizes
+    
+    ```bash
+    # See which files are too large for GitHub
+    find artifacts -type f -size +100M
+    
+    # Total size
+    du -sh artifacts/
+    ```
+    
+    **GitHub limit**: 100MB per file (without Git LFS)
+    
+    ---
+    
+    ### ℹ️ What Are These Files?
+    
+    - **`*.pt`**: Trained PyTorch models (association + C-VAE)
+    - **`*.npy`**: Pre-computed feature vectors for drugs/proteins
+    - **`*.pkl`**: Trained scalers and PCA models for featurization
+    - **`*.parquet`**: Phytochemical metadata
+    - **`id_maps.json`**: Gene/drug ID mappings
+    
+    These files are **generated** by the scripts in `scripts/`, but are too large to include in the repository by default.
     """)
+    
+    # Show file tree for reference
+    with st.expander("📁 Expected File Structure"):
+        st.code("""
+artifacts/
+├── id_maps.json                           (~50 KB)
+├── model.pt                                (~2-5 MB)
+├── cvae_model.pt                           (~1-3 MB)
+├── drug_library.npy                        (~10-50 MB)
+├── protein_library.npy                     (~5-20 MB)
+├── phyto_library.npy                       (~5-20 MB, optional)
+├── phyto_metadata.parquet                  (~1-5 MB, optional)
+├── drug_featurizer_desc_scaler.pkl         (~10 KB)
+├── drug_featurizer_fp_scaler.pkl           (~100 KB)
+├── drug_featurizer_fp_pca.pkl              (~500 KB)
+├── protein_featurizer_physchem_scaler.pkl  (~5 KB)
+├── protein_featurizer_dpc_scaler.pkl       (~50 KB)
+└── protein_featurizer_dpc_pca.pkl          (~200 KB)
+        """)
     
     st.stop()
 
@@ -194,11 +280,26 @@ with st.sidebar:
     
     st.divider()
     
+    # Show artifact status
+    st.subheader("Artifact Status")
+    missing_artifacts = check_artifacts()
+    
+    if not missing_artifacts:
+        st.success("All artifacts loaded ✓")
+    else:
+        total_missing = sum(len(files) for files in missing_artifacts.values())
+        st.error(f"{total_missing} artifacts missing")
+        
+        for category, files in missing_artifacts.items():
+            if files:
+                st.caption(f"❌ {category}: {len(files)} missing")
+    
+    st.divider()
+    
     st.markdown("""
     ### 📚 Resources
-    - [Documentation](#)
-    - [GitHub Repo](#)
-    - [Report Issues](#)
+    - [GitHub Repo](https://github.com/faaiz22/gd-cdss)
+    - [Report Issues](https://github.com/faaiz22/gd-cdss/issues)
     """)
     
     st.divider()
