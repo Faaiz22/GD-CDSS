@@ -1,51 +1,36 @@
-# ============================================================================
-# Gene-Drug CDSS v2 - Production Dependencies
-# Tested on Python 3.9-3.11
-# ============================================================================
+# Python 3.11 Compatible Requirements
+# Tested on Streamlit Cloud with Python 3.11.9
 
-# Streamlit (pin version for stability)
-streamlit==1.31.0
+streamlit>=1.31.0
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
 
-# Core ML/Data
-numpy==1.24.3
-pandas==2.0.3
-scikit-learn==1.3.0
-torch==2.1.0
-torchvision==0.16.0  # Required by torch
-torchaudio==2.1.0    # Required by torch
+# PyTorch - CPU only for smaller size
+torch>=2.1.0,<2.5.0
+torchvision>=0.16.0,<0.20.0
 
 # Chemistry
-rdkit==2023.9.1
+rdkit>=2023.9.0
 
 # Biology
-biopython==1.81
-requests==2.31.0
+biopython>=1.81
+requests>=2.31.0
 
 # Explainability
-shap==0.44.0
+shap>=0.44.0
 
 # Visualization
-matplotlib==3.7.2
-plotly==5.17.0
+matplotlib>=3.7.0
+plotly>=5.17.0
 
 # Configuration
-pyyaml==6.0.1
+pyyaml>=6.0
 
 # Utilities
-tqdm==4.66.1
-joblib==1.3.2
+tqdm>=4.66.0
+joblib>=1.3.0
 
 # Data formats
-openpyxl==3.1.2
-pyarrow==14.0.1
-
-# Optional: For downloading artifacts from external storage
-# Uncomment if using Google Drive for artifact hosting
-# gdown==4.7.1
-
-# Optional: For Git LFS if using large files
-# git-lfs==3.4.0
-
-# Development only (comment out for production)
-# jupyter==1.0.0
-# ipykernel==6.25.2
+openpyxl>=3.1.0
+pyarrow>=14.0.0
