@@ -1,0 +1,12 @@
+# System-level dependencies for Streamlit Cloud
+# These are installed via apt-get before Python packages
+
+# Required for RDKit
+libxrender1
+libxext6
+
+# Required for matplotlib
+libgomp1
+
+# Network tools (optional, for debugging)
+curl
