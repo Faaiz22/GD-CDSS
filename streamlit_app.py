@@ -184,59 +184,43 @@ if missing:
     ```
     
     **GitHub limit**: 100MB per file (without Git LFS)
-    
-    ---
-    
-    ### ℹ️ What Are These Files?
-    
-    - **`*.pt`**: Trained PyTorch models (association + C-VAE)
-    - **`*.npy`**: Pre-computed feature vectors for drugs/proteins
-    - **`*.pkl`**: Trained scalers and PCA models for featurization
-    - **`*.parquet`**: Phytochemical metadata
-    - **`id_maps.json`**: Gene/drug ID mappings
-    
-    These files are **generated** by the scripts in `scripts/`, but are too large to include in the repository by default.
     """)
-    
-    # Show file tree for reference
-    with st.expander("📁 Expected File Structure"):
-        st.code("""
-artifacts/
-├── id_maps.json                           (~50 KB)
-├── model.pt                                (~2-5 MB)
-├── cvae_model.pt                           (~1-3 MB)
-├── drug_library.npy                        (~10-50 MB)
-├── protein_library.npy                     (~5-20 MB)
-├── phyto_library.npy                       (~5-20 MB, optional)
-├── phyto_metadata.parquet                  (~1-5 MB, optional)
-├── drug_featurizer_desc_scaler.pkl         (~10 KB)
-├── drug_featurizer_fp_scaler.pkl           (~100 KB)
-├── drug_featurizer_fp_pca.pkl              (~500 KB)
-├── protein_featurizer_physchem_scaler.pkl  (~5 KB)
-├── protein_featurizer_dpc_scaler.pkl       (~50 KB)
-└── protein_featurizer_dpc_pca.pkl          (~200 KB)
-        """)
     
     st.stop()
 
 # System ready
 st.success("✅ All artifacts validated. System ready.")
 
+# ============================================================================
+# NAVIGATION GUIDE
+# ============================================================================
+
 st.markdown("""
+### 🚀 Get Started
+
+**Select a module from the sidebar** (look for pages with 🔬, 🔄, 🧬 icons)
+
+If you don't see the sidebar pages:
+1. Ensure the `pages/` folder exists at `app/pages/` or root `pages/`
+2. Page files must start with numbers: `1_🔬_Prediction.py`
+3. Check that all page files have proper imports
+
+---
+
 ### 📊 System Capabilities
 
-**1. Prediction & Explainability**
+**1. Prediction & Explainability** (Page 1)
 - Live NCBI protein sequence fetching
 - 135-dim drug + 38-dim protein feature engineering
 - Neural network association prediction
 - SHAP waterfall explanations for model transparency
 
-**2. Drug Repurposing**
+**2. Drug Repurposing** (Page 2)
 - **Phytochemical Library**: 1000+ natural compounds with bioavailability filters
 - **PharmGKB Library**: FDA-approved drugs with known gene associations
 - Multi-criteria filtering (GI absorption, BBB penetration, molecular families)
 
-**3. Generative Discovery**
+**3. Generative Discovery** (Page 3)
 - Conditional VAE trained on positive associations
 - Latent space sampling for novel drug candidates
 - Nearest-neighbor analog identification
@@ -244,9 +228,21 @@ st.markdown("""
 
 ---
 
-### 🚀 Navigation
+### 🎯 Quick Test
 
-Use the **sidebar** to access different modules.
+Try this simple test to verify everything works:
+
+1. **Go to "Prediction & XAI" page** (sidebar)
+2. **SMILES**: `CCO` (ethanol)
+3. **Gene**: `TP53`
+4. **Click "Run Prediction"**
+
+You should see:
+- ✅ Protein sequence fetched (393 amino acids)
+- ✅ Association score (0.0-1.0)
+- ✅ SHAP waterfall plot
+
+---
 
 ### ⚙️ Configuration
 
@@ -296,12 +292,24 @@ with st.sidebar:
     
     st.divider()
     
+    # Navigation guide
+    st.info("""
+    👈 **Pages should appear here**
+    
+    Look for:
+    - 🔬 Prediction & XAI
+    - 🔄 Drug Repurposing  
+    - 🧬 Generative Discovery
+    
+    If pages don't appear, check file structure.
+    """)
+    
+    st.divider()
+    
     st.markdown("""
     ### 📚 Resources
     - [GitHub Repo](https://github.com/faaiz22/gd-cdss)
     - [Report Issues](https://github.com/faaiz22/gd-cdss/issues)
     """)
-    
-    st.divider()
     
     st.caption("Gene-Drug CDSS v2 | Built with Streamlit")
