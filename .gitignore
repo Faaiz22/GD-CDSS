@@ -1,0 +1,105 @@
+# ============================================================================
+# CRITICAL: These patterns prevent large files from breaking GitHub/Streamlit
+# ============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ============================================================================
+# ARTIFACTS - These files are TOO LARGE for GitHub (>100MB limit)
+# Use Git LFS or external storage for production deployment
+# ============================================================================
+
+# Large numpy arrays
+artifacts/*.npy
+
+# PyTorch models
+artifacts/*.pt
+artifacts/*.pth
+
+# Parquet files
+artifacts/*.parquet
+
+# Trained model checkpoints
+artifacts/model*.pt
+artifacts/cvae*.pt
+
+# Featurizer models (keep these if <10MB each)
+# Uncomment if they exceed GitHub limits:
+# artifacts/drug_featurizer*.pkl
+# artifacts/protein_featurizer*.pkl
+
+# ============================================================================
+# DATA - Raw data should NOT be committed
+# ============================================================================
+data/raw/*.tsv
+data/raw/*.csv
+data/raw/*.xlsx
+
+# Exception: Allow small sample data for testing
+!data/raw/sample_*.csv
+!data/raw/sample_*.tsv
+
+# ============================================================================
+# SECRETS - NEVER commit API keys or credentials
+# ============================================================================
+.env
+*.key
+*.pem
+secrets.toml
+.streamlit/secrets.toml
+
+# ============================================================================
+# LOGS & TEMP
+# ============================================================================
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+# ============================================================================
+# Misc
+# ============================================================================
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.tox/
