@@ -1,0 +1,54 @@
+# ============================================================================
+# Streamlit Configuration for Production Deployment
+# Place this file at: .streamlit/config.toml
+# ============================================================================
+
+[theme]
+# Custom theme (optional - remove to use default)
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[server]
+# Server configuration
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+
+# Important for Streamlit Cloud
+runOnSave = true
+maxUploadSize = 200
+
+[browser]
+# Browser settings
+gatherUsageStats = false
+serverAddress = "localhost"
+serverPort = 8501
+
+[runner]
+# Script runner settings
+magicEnabled = true
+fastReruns = true
+
+[client]
+# Client-side settings
+showErrorDetails = true
+toolbarMode = "minimal"
+
+[logger]
+# Logging level
+level = "info"
+
+# ============================================================================
+# Memory Management (Critical for Large Models)
+# ============================================================================
+[server.fileWatcherType]
+# Use "poll" for better compatibility with Docker/Cloud
+type = "poll"
+
+[server.enableStaticServing]
+# Disable static file serving if not needed
+enabled = false
