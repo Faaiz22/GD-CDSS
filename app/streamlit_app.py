@@ -1,6 +1,6 @@
 """
-Gene-Drug CDSS v2 - Streamlit Cloud Entry Point
-CRITICAL: This file MUST be at project root for Streamlit Cloud deployment
+Gene-Drug CDSS v2 - Streamlit Entry Point
+FIXED: Better artifact handling with clear setup instructions
 """
 
 import streamlit as st
@@ -8,7 +8,7 @@ import sys
 import os
 
 # ============================================================================
-# PATH RESOLUTION - WORKS ON BOTH LOCAL AND STREAMLIT CLOUD
+# PATH RESOLUTION
 # ============================================================================
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 if PROJECT_ROOT not in sys.path:
@@ -33,20 +33,20 @@ st.set_page_config(
 # ============================================================================
 @st.cache_data
 def check_artifacts():
-    """Verify all required artifacts exist before running"""
+    """Verify required artifacts exist"""
     required = {
-        "Core Data": [
+        "Core Data (1)": [
             "artifacts/id_maps.json",
         ],
-        "Models": [
+        "Models (2)": [
             "artifacts/model.pt",
             "artifacts/cvae_model.pt",
         ],
-        "Feature Libraries": [
+        "Feature Libraries (2)": [
             "artifacts/drug_library.npy",
             "artifacts/protein_library.npy",
         ],
-        "Featurizers": [
+        "Featurizers (6)": [
             "artifacts/drug_featurizer_desc_scaler.pkl",
             "artifacts/drug_featurizer_fp_scaler.pkl",
             "artifacts/drug_featurizer_fp_pca.pkl",
@@ -54,7 +54,7 @@ def check_artifacts():
             "artifacts/protein_featurizer_dpc_scaler.pkl",
             "artifacts/protein_featurizer_dpc_pca.pkl",
         ],
-        "Optional (Phytochemicals)": [
+        "Optional - Phytochemicals (2)": [
             "artifacts/phyto_library.npy",
             "artifacts/phyto_metadata.parquet",
         ]
@@ -74,7 +74,7 @@ def check_artifacts():
     return missing
 
 # ============================================================================
-# MAIN PAGE CONTENT
+# MAIN PAGE
 # ============================================================================
 
 st.title("🧬 Gene-Drug Clinical Decision Support System v2")
@@ -90,105 +90,143 @@ This system integrates:
 ---
 """)
 
-# Check artifacts before allowing navigation
+# Check artifacts
 with st.spinner("Validating system artifacts..."):
     missing = check_artifacts()
 
 if missing:
     st.error("⚠️ **Critical: Missing Artifacts**")
     
-    # Show what's missing by category
+    # Show what's missing
     for category, files in missing.items():
         if files:
-            with st.expander(f"❌ {category} ({len(files)} missing)"):
+            with st.expander(f"❌ {category} ({len(files)} missing)", expanded=True):
                 for f in files:
-                    st.code(f)
+                    st.code(f, language="")
     
     st.divider()
     
-    st.markdown("""
-    ### 🛠️ How to Fix This
+    # Smart setup instructions based on what exists
+    has_colab_csv = any([
+        os.path.exists(os.path.join(PROJECT_ROOT, "data", "raw", fname))
+        for fname in [
+            "Unified_Gene-Drug_Association_Protein_Features.csv",
+            "Unified_Gene-Drug_Association_3D_Features.csv",
+            "Unified_Gene-Drug_Association_with_Sequences.csv",
+        ]
+    ])
     
-    Your artifacts are missing. Choose **ONE** solution:
+    has_models = not missing.get("Models (2)")
+    has_featurizers = not missing.get("Featurizers (6)")
+    has_libraries = not missing.get("Feature Libraries (2)")
     
-    #### **Option 1: Git LFS** (Recommended if files < 2GB total)
+    st.markdown("### 🛠️ How to Fix This")
     
-    ```bash
-    # Install Git LFS
-    brew install git-lfs  # macOS
-    # OR
-    sudo apt-get install git-lfs  # Linux
+    # ========== SCENARIO 1: Has Colab CSV ==========
+    if has_colab_csv:
+        st.success("✅ **Detected Colab-generated CSV file!**")
+        st.markdown("""
+        ### ✨ Quick Setup (Recommended)
+        
+        You already have the unified CSV from your Colab notebook.
+        Just run the artifact generator:
+        
+        ```bash
+        # Step 1: Generate all artifacts from your Colab data
+        python scripts/00_generate_from_colab.py
+        
+        # Step 2: Train models (takes 5-15 minutes)
+        python scripts/02_train_association_model.py
+        python scripts/03_train_cvae.py
+        
+        # Step 3: Restart this Streamlit app
+        streamlit run streamlit_app.py
+        ```
+        
+        This will create all 13 required artifacts automatically.
+        """)
     
-    # Initialize
-    git lfs install
+    # ========== SCENARIO 2: Has TSV files ==========
+    elif os.path.exists(os.path.join(PROJECT_ROOT, "data", "raw", "genes.tsv")):
+        st.warning("📋 **Detected raw TSV files (PharmGKB data)**")
+        st.markdown("""
+        ### Standard Setup
+        
+        ```bash
+        # Step 1: Build artifacts from TSV files (10-20 minutes)
+        python scripts/01_build_artifacts.py
+        
+        # Step 2: Train models
+        python scripts/02_train_association_model.py
+        python scripts/03_train_cvae.py
+        
+        # Step 3: Restart app
+        streamlit run streamlit_app.py
+        ```
+        """)
     
-    # Track large files
-    git lfs track "artifacts/*.npy"
-    git lfs track "artifacts/*.pt"
-    git lfs track "artifacts/*.parquet"
-    git lfs track "artifacts/*.pkl"
+    # ========== SCENARIO 3: No data at all ==========
+    else:
+        st.error("❌ **No source data found**")
+        st.markdown("""
+        ### Option A: Use Colab Notebook Data (Easiest)
+        
+        1. **Upload your Colab-generated CSV** to `data/raw/`:
+           - `Unified_Gene-Drug_Association_Protein_Features.csv` (best)
+           - OR `Unified_Gene-Drug_Association_3D_Features.csv`
+           - OR `Unified_Gene-Drug_Association_with_Sequences.csv`
+        
+        2. **Optional**: Also upload `phytochemicals_new1.csv` for phyto module
+        
+        3. **Run generator**:
+           ```bash
+           python scripts/00_generate_from_colab.py
+           python scripts/02_train_association_model.py
+           python scripts/03_train_cvae.py
+           ```
+        
+        ---
+        
+        ### Option B: Use PharmGKB Raw Data
+        
+        1. **Download PharmGKB data** from https://www.pharmgkb.org/downloads
+        2. **Place in `data/raw/`**:
+           - `genes.tsv`
+           - `drugs.tsv`
+           - `relationships.tsv`
+        
+        3. **Build**:
+           ```bash
+           python scripts/01_build_artifacts.py
+           python scripts/02_train_association_model.py
+           python scripts/03_train_cvae.py
+           ```
+        """)
     
-    # Add and push
-    git add .gitattributes
-    git add artifacts/
-    git commit -m "Add artifacts via Git LFS"
-    git push
-    ```
+    st.divider()
     
-    #### **Option 2: Build Artifacts Now** (Slowest but works)
+    # File checklist
+    st.markdown("### 📋 Current File Status")
     
-    If you have raw data files in `data/raw/`, you can build artifacts:
+    data_files = [
+        "data/raw/Unified_Gene-Drug_Association_Protein_Features.csv",
+        "data/raw/genes.tsv",
+        "data/raw/drugs.tsv",
+        "data/raw/relationships.tsv",
+        "data/raw/phytochemicals_new1.csv",
+    ]
     
-    ```bash
-    # 1. Install dependencies
-    pip install -r requirements.txt
-    
-    # 2. Build artifacts (takes 5-15 minutes)
-    python scripts/01_build_artifacts.py
-    python scripts/02_train_association_model.py
-    python scripts/03_train_cvae.py
-    
-    # 3. Commit and push
-    git add artifacts/
-    git commit -m "Add generated artifacts"
-    git push
-    ```
-    
-    #### **Option 3: External Storage** (Best for > 2GB)
-    
-    Upload artifacts to Google Drive and modify `src/utils/streamlit_helpers.py`:
-    
-    ```python
-    # Add to requirements.txt:
-    gdown==4.7.1
-    
-    # In streamlit_helpers.py:
-    import gdown
-    gdown.download_folder(
-        id="YOUR_GOOGLE_DRIVE_FOLDER_ID",
-        output="artifacts/",
-        quiet=False
-    )
-    ```
-    
-    ---
-    
-    ### 📊 Check Your Artifact Sizes
-    
-    ```bash
-    # See which files are too large for GitHub
-    find artifacts -type f -size +100M
-    
-    # Total size
-    du -sh artifacts/
-    ```
-    
-    **GitHub limit**: 100MB per file (without Git LFS)
-    """)
+    for fpath in data_files:
+        full_path = os.path.join(PROJECT_ROOT, fpath)
+        if os.path.exists(full_path):
+            size_mb = os.path.getsize(full_path) / (1024 * 1024)
+            st.success(f"✅ {fpath} ({size_mb:.2f} MB)")
+        else:
+            st.error(f"❌ {fpath}")
     
     st.stop()
 
-# System ready
+# System ready!
 st.success("✅ All artifacts validated. System ready.")
 
 # ============================================================================
@@ -198,69 +236,55 @@ st.success("✅ All artifacts validated. System ready.")
 st.markdown("""
 ### 🚀 Get Started
 
-**Select a module from the sidebar** (look for pages with 🔬, 🔄, 🧬 icons)
-
-If you don't see the sidebar pages:
-1. Ensure the `pages/` folder exists at `app/pages/` or root `pages/`
-2. Page files must start with numbers: `1_🔬_Prediction.py`
-3. Check that all page files have proper imports
+**Select a module from the sidebar:**
+- 🔬 **Prediction & XAI**: Single drug-gene predictions with explainability
+- 🔄 **Drug Repurposing**: Screen entire libraries against target genes
+- 🧬 **Generative Discovery**: Generate novel drug candidates
 
 ---
 
 ### 📊 System Capabilities
 
-**1. Prediction & Explainability** (Page 1)
+**1. Prediction & Explainability**
 - Live NCBI protein sequence fetching
 - 135-dim drug + 38-dim protein feature engineering
 - Neural network association prediction
-- SHAP waterfall explanations for model transparency
+- SHAP waterfall explanations
 
-**2. Drug Repurposing** (Page 2)
-- **Phytochemical Library**: 1000+ natural compounds with bioavailability filters
-- **PharmGKB Library**: FDA-approved drugs with known gene associations
-- Multi-criteria filtering (GI absorption, BBB penetration, molecular families)
+**2. Drug Repurposing**
+- **Phytochemical Library**: 1000+ natural compounds
+- **PharmGKB Library**: FDA-approved drugs
+- Advanced filtering (GI absorption, BBB penetration)
 
-**3. Generative Discovery** (Page 3)
+**3. Generative Discovery**
 - Conditional VAE trained on positive associations
-- Latent space sampling for novel drug candidates
+- Latent space sampling for novel candidates
 - Nearest-neighbor analog identification
-- Distribution analysis vs. known drug libraries
 
 ---
 
 ### 🎯 Quick Test
 
-Try this simple test to verify everything works:
-
-1. **Go to "Prediction & XAI" page** (sidebar)
+1. Go to **"Prediction & XAI"** (sidebar)
 2. **SMILES**: `CCO` (ethanol)
 3. **Gene**: `TP53`
 4. **Click "Run Prediction"**
 
-You should see:
+Expected output:
 - ✅ Protein sequence fetched (393 amino acids)
 - ✅ Association score (0.0-1.0)
 - ✅ SHAP waterfall plot
 
 ---
 
-### ⚙️ Configuration
-
-- **NCBI Email**: Configure in Streamlit Secrets for production
-- **Model Hyperparameters**: Edit `config/config.yaml`
-- **Data Sources**: Place raw data in `data/raw/`
-
 ### 📝 Citation
 
-If you use this system in research, please cite:
 ```
 Gene-Drug CDSS v2: An AI-Powered Clinical Decision Support System
 for Personalized Pharmacogenomics (2024)
 ```
 
----
-
-**⚠️ Disclaimer**: This is a research prototype. Not validated for clinical use.
+**⚠️ Disclaimer**: Research prototype. Not validated for clinical use.
 """)
 
 # ============================================================================
@@ -276,7 +300,7 @@ with st.sidebar:
     
     st.divider()
     
-    # Show artifact status
+    # Artifact status
     st.subheader("Artifact Status")
     missing_artifacts = check_artifacts()
     
@@ -292,16 +316,14 @@ with st.sidebar:
     
     st.divider()
     
-    # Navigation guide
+    # Quick tips
     st.info("""
-    👈 **Pages should appear here**
-    
-    Look for:
+    **👈 Pages in Sidebar:**
     - 🔬 Prediction & XAI
     - 🔄 Drug Repurposing  
     - 🧬 Generative Discovery
     
-    If pages don't appear, check file structure.
+    If pages don't appear, check that `pages/` folder exists with numbered files.
     """)
     
     st.divider()
