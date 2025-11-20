@@ -1,5 +1,5 @@
 # ============================================================================
-# CRITICAL: These patterns prevent large files from breaking GitHub/Streamlit
+# CRITICAL: Prevent large files from breaking GitHub/Streamlit
 # ============================================================================
 
 # Python
@@ -43,48 +43,44 @@ wheels/
 Thumbs.db
 
 # ============================================================================
-# ARTIFACTS - These files are TOO LARGE for GitHub (>100MB limit)
-# Use Git LFS or external storage for production deployment
+# ARTIFACTS - Track with Git LFS or external storage
 # ============================================================================
 
-# Large numpy arrays
+# Large numpy arrays (use Git LFS)
 artifacts/*.npy
 
-# PyTorch models
+# PyTorch models (use Git LFS)
 artifacts/*.pt
 artifacts/*.pth
 
 # Parquet files
 artifacts/*.parquet
 
-# Trained model checkpoints
-artifacts/model*.pt
-artifacts/cvae*.pt
-
-# Featurizer models (keep these if <10MB each)
-# Uncomment if they exceed GitHub limits:
-# artifacts/drug_featurizer*.pkl
-# artifacts/protein_featurizer*.pkl
+# PKL files are small enough to commit directly
+# artifacts/*.pkl  # ALLOW THESE (typically < 10MB each)
 
 # ============================================================================
-# DATA - Raw data should NOT be committed
+# DATA - NEVER commit raw data
 # ============================================================================
 data/raw/*.tsv
 data/raw/*.csv
 data/raw/*.xlsx
 
-# Exception: Allow small sample data for testing
+# Exception: Allow small sample data
 !data/raw/sample_*.csv
 !data/raw/sample_*.tsv
 
 # ============================================================================
-# SECRETS - NEVER commit API keys or credentials
+# SECRETS - NEVER commit credentials
 # ============================================================================
 .env
 *.key
 *.pem
 secrets.toml
 .streamlit/secrets.toml
+
+# But allow the template
+!.streamlit/secrets.toml.template
 
 # ============================================================================
 # LOGS & TEMP
@@ -96,6 +92,19 @@ temp/
 .cache/
 
 # ============================================================================
+# Generated Outputs
+# ============================================================================
+outputs/
+results/
+figures/
+*.png
+*.jpg
+*.pdf
+# But allow important documentation images
+!docs/*.png
+!README_images/*.png
+
+# ============================================================================
 # Misc
 # ============================================================================
 .coverage
@@ -103,3 +112,13 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 .tox/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
